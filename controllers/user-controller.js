@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs')
 const { User, Restaurant, Comment, Favorite, Like, Followship } = require('../models')
 const { imgurFileHandler } = require('../helpers/file-helpers')
+const auth = require('../helpers/auth-helpers')
 
 const userController = {
   signUpPage: (req, res) => {
@@ -53,7 +54,9 @@ const userController = {
       .catch(err => next(err))
   },
   editUser: (req, res, next) => {
-    return User.findByPk(req.params.id, {
+    const useId = auth.getUser(req).id || req.params.id
+
+    return User.findByPk(useId, {
       raw: true
     })
       .then(user => {
@@ -63,6 +66,10 @@ const userController = {
       .catch(err => next(err))
   },
   putUser: (req, res, next) => {
+    const currentUser = Number(req.user.id)
+    const user = Number(req.params.id)
+    if (currentUser !== user) return res.redirect('back')
+
     const { name } = req.body
     if (!name) throw new Error('User name is required!')
     const { file } = req
